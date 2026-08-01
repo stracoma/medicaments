@@ -5,6 +5,7 @@ class Medicament {
   final String posologie;
   final String prix;
   final String categorie;
+  final String couleur; // 'vert', 'rouge' ou 'bleu'
 
   const Medicament({
     this.id,
@@ -13,6 +14,7 @@ class Medicament {
     required this.posologie,
     required this.prix,
     required this.categorie,
+    this.couleur = 'bleu', // valeur par défaut
   });
 
   // Convertit un Medicament en Map (pour l'écriture en base)
@@ -24,6 +26,7 @@ class Medicament {
       'posologie': posologie,
       'prix': prix,
       'categorie': categorie,
+      'couleur': couleur,
     };
   }
 
@@ -36,6 +39,7 @@ class Medicament {
       posologie: map['posologie'] as String,
       prix: map['prix'] as String,
       categorie: map['categorie'] as String,
+      couleur: map['couleur'] as String? ?? 'bleu',
     );
   }
 
@@ -47,6 +51,7 @@ class Medicament {
     String? posologie,
     String? prix,
     String? categorie,
+    String? couleur,
   }) {
     return Medicament(
       id: id ?? this.id,
@@ -55,6 +60,7 @@ class Medicament {
       posologie: posologie ?? this.posologie,
       prix: prix ?? this.prix,
       categorie: categorie ?? this.categorie,
+      couleur: couleur ?? this.couleur,
     );
   }
 }

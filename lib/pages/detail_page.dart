@@ -13,6 +13,7 @@ class DetailPage extends StatefulWidget {
 
 class _DetailPageState extends State<DetailPage> {
   final _formKey = GlobalKey<FormState>();
+  String _selectedColor = 'bleu';
   final _nomController = TextEditingController();
   final _laboController = TextEditingController();
   final _posologieController = TextEditingController();
@@ -46,11 +47,46 @@ class _DetailPageState extends State<DetailPage> {
     super.dispose();
   }
 
+  Color _colorFromString(String couleur) {
+    switch (couleur) {
+      case 'rouge':
+        return Colors.red;
+      case 'vert':
+        return Colors.green;
+      case 'bleu':
+      default:
+        return Colors.blue[200]!;
+    }
+  }
+
+  Widget _buildColorChoice(
+    String value,
+    Color color,
+    StateSetter setDialogState,
+  ) {
+    final isSelected = _selectedColor == value;
+    return GestureDetector(
+      onTap: () {
+        setDialogState(() {
+          _selectedColor = value;
+        });
+      },
+      child: CircleAvatar(
+        radius: isSelected ? 18 : 14,
+        backgroundColor: color,
+        child: isSelected
+            ? const Icon(Icons.check, color: Colors.white, size: 16)
+            : null,
+      ),
+    );
+  }
+
   void _showFormDialog({Medicament? existing}) {
     _nomController.text = existing?.nom ?? '';
     _laboController.text = existing?.labo ?? '';
     _posologieController.text = existing?.posologie ?? '';
     _prixController.text = existing?.prix ?? '';
+    _selectedColor = existing?.couleur ?? 'bleu';
 
     showDialog(
       context: context,
@@ -61,40 +97,73 @@ class _DetailPageState extends State<DetailPage> {
                 ? 'Ajouter - ${widget.categorie}'
                 : 'Modifier - ${widget.categorie}',
           ),
-          content: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _nomController,
-                    decoration: const InputDecoration(labelText: 'Nom'),
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Requis' : null,
+          //====================================
+          content: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: _nomController,
+                        decoration: const InputDecoration(labelText: 'Nom'),
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Requis' : null,
+                      ),
+                      TextFormField(
+                        controller: _laboController,
+                        decoration: const InputDecoration(labelText: 'Labo'),
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Requis' : null,
+                      ),
+                      TextFormField(
+                        controller: _posologieController,
+                        decoration: const InputDecoration(
+                          labelText: 'Posologie',
+                        ),
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Requis' : null,
+                      ),
+                      TextFormField(
+                        controller: _prixController,
+                        decoration: const InputDecoration(labelText: 'Prix'),
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Requis' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('Couleur'),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildColorChoice(
+                            'rouge',
+                            Colors.red,
+                            setDialogState,
+                          ),
+                          _buildColorChoice(
+                            'vert',
+                            Colors.green,
+                            setDialogState,
+                          ),
+                          _buildColorChoice(
+                            'bleu',
+                            Colors.blue[200]!,
+                            setDialogState,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  TextFormField(
-                    controller: _laboController,
-                    decoration: const InputDecoration(labelText: 'Labo'),
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Requis' : null,
-                  ),
-                  TextFormField(
-                    controller: _posologieController,
-                    decoration: const InputDecoration(labelText: 'Posologie'),
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Requis' : null,
-                  ),
-                  TextFormField(
-                    controller: _prixController,
-                    decoration: const InputDecoration(labelText: 'Prix'),
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Requis' : null,
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
+          //====================================
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -110,6 +179,7 @@ class _DetailPageState extends State<DetailPage> {
                     posologie: _posologieController.text,
                     prix: _prixController.text,
                     categorie: widget.categorie,
+                    couleur: _selectedColor,
                   );
 
                   if (existing == null) {
@@ -198,13 +268,24 @@ class _DetailPageState extends State<DetailPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              med.nom,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[800],
-                              ),
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 7,
+                                  backgroundColor: _colorFromString(
+                                    med.couleur,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  med.nom,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue[800],
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 4),
                             Text('Labo : ${med.labo}'),

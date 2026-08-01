@@ -21,7 +21,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE medicaments(
@@ -30,10 +30,28 @@ class DatabaseHelper {
             labo TEXT NOT NULL,
             posologie TEXT NOT NULL,
             prix TEXT NOT NULL,
-            categorie TEXT NOT NULL
+            categorie TEXT NOT NULL,
+            couleur TEXT NOT NULL DEFAULT 'bleu'
           )
         ''');
         // Insertion des données initiales
+        for (final med in medicamentsData) {
+          await db.insert('medicaments', med.toMap());
+        }
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        await db.execute('DROP TABLE IF EXISTS medicaments');
+        await db.execute('''
+          CREATE TABLE medicaments(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom TEXT NOT NULL,
+            labo TEXT NOT NULL,
+            posologie TEXT NOT NULL,
+            prix TEXT NOT NULL,
+            categorie TEXT NOT NULL,
+            couleur TEXT NOT NULL DEFAULT 'bleu'
+          )
+        ''');
         for (final med in medicamentsData) {
           await db.insert('medicaments', med.toMap());
         }
