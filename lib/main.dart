@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'pages/detail_page.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
+  // Initialise sqflite pour Linux/Windows/macOS desktop
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
   runApp(const MedicamentsApp());
 }
 

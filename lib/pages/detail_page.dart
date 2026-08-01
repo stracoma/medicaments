@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/medicaments_data.dart';
+import '../database/database_helper.dart';
 import '../models/medicament.dart';
 
 class DetailPage extends StatefulWidget {
@@ -18,6 +18,25 @@ class _DetailPageState extends State<DetailPage> {
   final _posologieController = TextEditingController();
   final _prixController = TextEditingController();
 
+  List<Medicament> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    final items = await DatabaseHelper.instance.getByCategorie(
+      widget.categorie,
+    );
+    setState(() {
+      _items = items;
+      _loading = false;
+    });
+  }
+
   @override
   void dispose() {
     _nomController.dispose();
@@ -27,7 +46,6 @@ class _DetailPageState extends State<DetailPage> {
     super.dispose();
   }
 
-  // existing == null -> ajout ; existing != null -> modification
   void _showFormDialog({Medicament? existing}) {
     _nomController.text = existing?.nom ?? '';
     _laboController.text = existing?.labo ?? '';
@@ -83,24 +101,25 @@ class _DetailPageState extends State<DetailPage> {
               child: const Text('Annuler'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_formKey.currentState!.validate()) {
                   final newMed = Medicament(
+                    id: existing?.id,
                     nom: _nomController.text,
                     labo: _laboController.text,
                     posologie: _posologieController.text,
                     prix: _prixController.text,
                     categorie: widget.categorie,
                   );
-                  setState(() {
-                    if (existing == null) {
-                      medicamentsData.add(newMed);
-                    } else {
-                      final index = medicamentsData.indexOf(existing);
-                      medicamentsData[index] = newMed;
-                    }
-                  });
-                  Navigator.pop(context);
+
+                  if (existing == null) {
+                    await DatabaseHelper.instance.insert(newMed);
+                  } else {
+                    await DatabaseHelper.instance.update(newMed);
+                  }
+
+                  if (context.mounted) Navigator.pop(context);
+                  await _loadItems();
                 }
               },
               child: Text(existing == null ? 'Ajouter' : 'Enregistrer'),
@@ -125,11 +144,10 @@ class _DetailPageState extends State<DetailPage> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () {
-                setState(() {
-                  medicamentsData.remove(med);
-                });
-                Navigator.pop(context);
+              onPressed: () async {
+                await DatabaseHelper.instance.delete(med.id!);
+                if (context.mounted) Navigator.pop(context);
+                await _loadItems();
               },
               child: const Text('Supprimer'),
             ),
@@ -141,10 +159,6 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final items = medicamentsData
-        .where((m) => m.categorie == widget.categorie)
-        .toList();
-
     return Scaffold(
       backgroundColor: Colors.blue[200],
       appBar: AppBar(
@@ -157,13 +171,15 @@ class _DetailPageState extends State<DetailPage> {
         backgroundColor: Colors.blue[800],
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: items.isEmpty
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _items.isEmpty
           ? const Center(child: Text('Aucun médicament dans cette catégorie'))
           : ListView.builder(
               padding: const EdgeInsets.all(12),
-              itemCount: items.length,
+              itemCount: _items.length,
               itemBuilder: (context, index) {
-                final med = items[index];
+                final med = _items[index];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.symmetric(
