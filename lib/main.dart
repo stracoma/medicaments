@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'pages/detail_page.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:path/path.dart';
+import 'dart:io';
 
 void main() {
   // Initialise sqflite pour Linux/Windows/macOS desktop
   sqfliteFfiInit();
+
+  // Force un chemin fixe et stable pour la base de données,
+  // indépendant du répertoire de lancement de l'app
+  final home = Platform.environment['HOME'] ?? '.';
+  final dbDir = join(home, '.local', 'share', 'medicaments');
+  Directory(dbDir).createSync(recursive: true);
+
   databaseFactory = databaseFactoryFfi;
+  databaseFactoryFfi.setDatabasesPath(dbDir);
+
   runApp(const MedicamentsApp());
 }
 
